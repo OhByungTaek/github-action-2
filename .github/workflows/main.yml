@@ -1,0 +1,41 @@
+name: Conditional, Sharing and Matrix Workflow Example
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+    - name: Create hello.txt
+      run: echo "Hello, GitHub Actions!" > hello.txt
+
+    - name: Upload Artifact
+      if: ${{ contains(github.event.head_commit.message, 'deploy') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name:  my-artifact-${{ matrix.os }} 
+
+        path: hello.txt
+
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Artifact
+      if: ${{ contains(github.event.head_commit.message, 'deploy') }}
+      uses: actions/download-artifact@v4
+      with:
+        name: my-artifact-ubuntu-latest
+
+    - name: Display hello.txt
+      run: cat hello.txt
+
